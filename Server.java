@@ -1,7 +1,9 @@
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 
 /**
  * Specifically, your Web server will
@@ -19,20 +21,53 @@ public class Server {
     public Server(){
         try{
             svSock = new ServerSocket(80);
-
-            Socket clientSocket = svSock.accept();
-            byte[] request = new byte[1024];
-
-            InputStream in = clientSocket.getInputStream();
-            int reqSize = in.read(request);
-
+            System.out.println("Server Socket created with IP: " + this.svSock.getInetAddress().getHostAddress() + " and Port: " + this.svSock.getLocalPort());
         }catch(Exception e){
             e.printStackTrace();
         }
     }
     // receive HTTP GET requests over the connection
-    private void acceptConn(){
+    private void acceptConn() throws IOException{
+        try {
+            Socket clientSocket = svSock.accept();
 
+            // buffer for the received data
+            byte[] request = new byte[1024];
+
+            // Incoming stream
+            InputStream in = clientSocket.getInputStream();
+
+            // Receive data from the stream
+            int reqSize = in.read(request);
+            request = Arrays.copyOf(request, reqSize);
+            String str = new String(request);
+            System.out.println("Server received: " + str);
+        }
+        catch(IOException io){
+            io.printStackTrace();
+        }
+    }
+
+    private int getSocketTimeout() throws IOException {
+        return svSock.getSoTimeout();
+    }
+    private InetAddress getInetAddress(){
+        return svSock.getInetAddress();
+    }
+
+    private int getPort(){
+
+        return svSock.getLocalPort();
+    }
+
+    public static void main(String[] args) {
+        Server srv = new Server();
+        try {
+            srv.acceptConn();
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 //    public static void main(String[] args) {
 //        try{
