@@ -56,7 +56,6 @@ public class Server {
     }
 
     private int getPort(){
-
         return svSock.getLocalPort();
     }
 
@@ -69,17 +68,4 @@ public class Server {
             e.printStackTrace();
         }
     }
-//    public static void main(String[] args) {
-//        try{
-//            try (ServerSocket svSock = new ServerSocket(80)) {
-//
-//            }catch(IOException io){
-//                System.out.println("IOException occurred");
-//                io.printStackTrace();
-//            }
-//        }
-//        catch(Exception e){
-//            e.printStackTrace();
-//        }
-//    }
 }
