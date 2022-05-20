@@ -1,4 +1,3 @@
-package sjsu.edu.quiambao.darwish;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -43,7 +42,7 @@ public class Server {
             request = Arrays.copyOf(request, reqSize);
             String str = new String(request);
             System.out.println(str);
-
+            in.close();
             // Split the received string for parsing
             String [] reqMsg = str.split(" ");
             // input validation:
@@ -137,7 +136,7 @@ public class Server {
                 OutputStream os = socket.getOutputStream();
                 os.write(responseMsg.getBytes());
                 os.flush();
-
+                os.close();
 
             } catch(IOException f){
                 f.printStackTrace();
