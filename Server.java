@@ -21,7 +21,7 @@ public class Server {
     public Server(){
         try{
             svSock = new ServerSocket(80,1,InetAddress.getLocalHost());
-            System.out.println("Server Socket created with IP: " + svSock.getInetAddress().getHostAddress() + " and Port: " + this.svSock.getLocalPort());
+            System.out.println("Server - Socket created with IP: " + svSock.getInetAddress().getHostAddress() + " and Port: " + this.svSock.getLocalPort());
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -41,7 +41,8 @@ public class Server {
             int reqSize = in.read(request);
             request = Arrays.copyOf(request, reqSize);
             String str = new String(request);
-            System.out.println(str);
+            System.out.println("(Server) Message Received: " + str);
+
             // Split the received string for parsing
             String [] reqMsg = str.split(" ");
             // input validation:
@@ -65,9 +66,7 @@ public class Server {
                     // reassign String address to string representation of IP address
                     address = strBuilder.toString();
 
-                    System.out.println("ClientSocket inetAddress: " + clientSocket.getInetAddress().getHostAddress());
-                    //verify that address is same as server address.
-                    System.out.println("Parsed Address: " + address);
+                    //verify that address is same as server address and that socket is not closed.
                     if(address.equals(clientSocket.getInetAddress().getHostAddress()) && !clientSocket.isClosed()){
                         String fileName = fileDir[1];
                         sender(fileName, clientSocket);
@@ -116,7 +115,6 @@ public class Server {
                 // verify file exists:
                 if (!file.exists()) {
                         responseMsg = "HTTP/1.1 404 Not Found";
-                        System.out.println(responseMsg);
                 }
                 else {
                     InputStream is = new BufferedInputStream(new FileInputStream(file));
@@ -135,10 +133,10 @@ public class Server {
                         fileBytes[index] = (byte) bt;
                         index++;
                     }
-                    responseMsg = "HTTP/1.1 200 OK\n";
+                    responseMsg = "HTTP/1.1 200 OK";
 
                 }
-                System.out.println("Server out: " + responseMsg);
+
                 DataOutputStream os = new DataOutputStream(socket.getOutputStream());
                 os.write(responseMsg.getBytes());
                 os.flush();
@@ -150,6 +148,8 @@ public class Server {
                     os.write(fileBytes);
                     os.flush();
                 }
+                responseMsg = responseMsg.concat("\n" + "[Content Body]");
+                System.out.println("(Server) Message sent: " + responseMsg);
             } catch(IOException f){
                 f.printStackTrace();
             }

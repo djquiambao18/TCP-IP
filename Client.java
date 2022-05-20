@@ -22,6 +22,7 @@ public class Client {
     public Client(){
         try{
             clientSocket = new Socket(InetAddress.getLocalHost(), 80);
+            System.out.println("Client - Socket created with IP: " + clientSocket.getLocalAddress().getHostAddress() + " and Port: " + clientSocket.getPort());
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -33,43 +34,49 @@ public class Client {
             String in = scanner.next();
             OutputStream os = clientSocket.getOutputStream();
             String req = "GET http://" + clientSocket.getInetAddress().getHostAddress() + "/" + in;
+
             os.write(req.getBytes());
             os.flush();
+            System.out.println("(Client) Message sent: " + req);
             // read server response into client:
             InputStream is = clientSocket.getInputStream();
             byte[] responseHeader = new byte[1024];
             int size = is.read(responseHeader);
             responseHeader = Arrays.copyOf(responseHeader, size);
-            System.out.println(new String(responseHeader));
-
+            String resp = new String(responseHeader);
+            if(!resp.contains("404")) {
             // for reading in the data sent over the network.
             DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
             // read in data size:
             int dataSize = dis.readInt();
+                if (dataSize > 0) {
+                    // read in the data/file:
+                    byte[] data = new byte[dataSize];
+                    dis.readFully(data, 0, dataSize);
 
-            if(dataSize > 0) {
-                // read in the data/file:
-                byte [] data = new byte[dataSize];
-                dis.readFully(data, 0, dataSize);
-
-                // for parsing out the forward slash from requested file pathing
-                String[] parseDir;
-                String fileName = "";
-                if (in.contains("/")) {
-                    parseDir = in.split("/");
-                    fileName = parseDir[parseDir.length - 1];
-                }
-                if (!fileName.isEmpty()) {
-                    // create the file as per filename
-                    File file = new File(fileName);
-                    // try to write the actual data into the file:
-                    try (FileOutputStream fos = new FileOutputStream(file)) {
-                        fos.write(data);
-                        fos.flush();
-                    } catch (FileNotFoundException fe) {
-                        fe.printStackTrace();
+                    // for parsing out the forward slash from requested file pathing
+                    String[] parseDir;
+                    String fileName = "";
+                    if (in.contains("/")) {
+                        parseDir = in.split("/");
+                        fileName = parseDir[parseDir.length - 1];
+                    }
+                    if (!fileName.isEmpty()) {
+                        // create the file as per filename
+                        File file = new File(fileName);
+                        // try to write the actual data into the file:
+                        try (FileOutputStream fos = new FileOutputStream(file)) {
+                            fos.write(data);
+                            fos.flush();
+                            System.out.println("File saved as: " + fileName + " in current directory.");
+                            resp = resp.concat("\n" + "[Content Body]");
+                        } catch (FileNotFoundException fe) {
+                            fe.printStackTrace();
+                        }
                     }
                 }
+                System.out.println("(Client) Message received: " + resp);
+
                 os.close();
             }
         }catch(IOException e){
