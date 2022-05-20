@@ -20,8 +20,8 @@ public class Server {
 
     public Server(){
         try{
-            svSock = new ServerSocket(80);
-            System.out.println("Server Socket created with IP: " + this.svSock.getInetAddress().getHostAddress() + " and Port: " + this.svSock.getLocalPort());
+            svSock = new ServerSocket(80,1,InetAddress.getLocalHost());
+            System.out.println("Server Socket created with IP: " + svSock.getInetAddress().getHostAddress() + " and Port: " + this.svSock.getLocalPort());
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -42,7 +42,6 @@ public class Server {
             request = Arrays.copyOf(request, reqSize);
             String str = new String(request);
             System.out.println(str);
-            in.close();
             // Split the received string for parsing
             String [] reqMsg = str.split(" ");
             // input validation:
@@ -50,16 +49,26 @@ public class Server {
                 if(!reqMsg[1].isEmpty()) {
                     String address = reqMsg[1];
                     String [] fileDir = address.split("http://\\d+.\\d+\\.\\d+.\\d+/");
+
+                    address = address.replace("http://", " ");
+                    address = address.replace(fileDir[1], " ");
+                    address = address.replace("/", " ");
+                    address = address.trim();
+
                     String [] serverAddr = address.split("\\.");
                     StringBuilder strBuilder = new StringBuilder();
                     for(int i = 0; i < serverAddr.length-1; i++){
                         strBuilder.append(serverAddr[i]).append(".");
                     }
+
                     strBuilder.append(serverAddr[serverAddr.length-1]);
                     // reassign String address to string representation of IP address
                     address = strBuilder.toString();
+
+                    System.out.println("ClientSocket inetAddress: " + clientSocket.getInetAddress().getHostAddress());
                     //verify that address is same as server address.
-                    if(address.equals(svSock.getInetAddress().getHostAddress())) {
+                    System.out.println("Parsed Address: " + address);
+                    if(address.equals(clientSocket.getInetAddress().getHostAddress()) && !clientSocket.isClosed()){
                         String fileName = fileDir[1];
                         sender(fileName, clientSocket);
                         clientSocket.close();
@@ -100,7 +109,7 @@ public class Server {
                 // var for length of file
                 int fileLength;
                 // variables:
-                byte[] fileBytes;
+                byte[] fileBytes = null;
                 String responseMsg;
                 // for reading file contents
 
@@ -109,7 +118,7 @@ public class Server {
                         responseMsg = "HTTP/1.1 404 Not Found";
                         System.out.println(responseMsg);
                 }
-                 else {
+                else {
                     InputStream is = new BufferedInputStream(new FileInputStream(file));
                     // length of file and allocate byte array for sending file over TCP/IP
                     fileLength = (int) file.length();
@@ -126,41 +135,38 @@ public class Server {
                         fileBytes[index] = (byte) bt;
                         index++;
                     }
-                    responseMsg = "HTTP/1.1 200 OK";
-                    StringBuilder strBuilder = new StringBuilder();
-                    strBuilder.append(responseMsg).append("[");
-                    strBuilder.append(Arrays.toString(fileBytes)).append("]");
-                    responseMsg = strBuilder.toString();
+                    responseMsg = "HTTP/1.1 200 OK\n";
+
                 }
                 System.out.println("Server out: " + responseMsg);
-                OutputStream os = socket.getOutputStream();
+                DataOutputStream os = new DataOutputStream(socket.getOutputStream());
                 os.write(responseMsg.getBytes());
                 os.flush();
-                os.close();
-
+                if(fileBytes != null) {
+                    // send to client the size of the file
+                    os.writeInt(fileBytes.length);
+                    os.flush();
+                    // send to client the file
+                    os.write(fileBytes);
+                    os.flush();
+                }
             } catch(IOException f){
                 f.printStackTrace();
             }
-
-
     }
-
-    private int getSocketTimeout() throws IOException {
+    public int getSocketTimeout() throws IOException {
         return svSock.getSoTimeout();
     }
-    private InetAddress getInetAddress(){
+    public InetAddress getInetAddress(){
         return svSock.getInetAddress();
     }
-
-    private int getPort(){
+    public int getPort(){
         return svSock.getLocalPort();
     }
-
     public static void main(String[] args) {
         Server srv = new Server();
         try {
             srv.acceptConn();
-
         }catch(Exception e){
             e.printStackTrace();
         }

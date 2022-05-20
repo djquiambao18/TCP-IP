@@ -1,8 +1,11 @@
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 /***
@@ -18,7 +21,7 @@ public class Client {
     Socket clientSocket;
     public Client(){
         try{
-            clientSocket = new Socket("localhost", 80);
+            clientSocket = new Socket(InetAddress.getLocalHost(), 80);
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -32,14 +35,49 @@ public class Client {
             String req = "GET http://" + clientSocket.getInetAddress().getHostAddress() + "/" + in;
             os.write(req.getBytes());
             os.flush();
-            os.close();
+            // read server response into client:
+            InputStream is = clientSocket.getInputStream();
+            byte[] responseHeader = new byte[1024];
+            int size = is.read(responseHeader);
+            responseHeader = Arrays.copyOf(responseHeader, size);
+            System.out.println(new String(responseHeader));
 
+            // for reading in the data sent over the network.
+            DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
+            // read in data size:
+            int dataSize = dis.readInt();
+
+            if(dataSize > 0) {
+                // read in the data/file:
+                byte [] data = new byte[dataSize];
+                dis.readFully(data, 0, dataSize);
+
+                // for parsing out the forward slash from requested file pathing
+                String[] parseDir;
+                String fileName = "";
+                if (in.contains("/")) {
+                    parseDir = in.split("/");
+                    fileName = parseDir[parseDir.length - 1];
+                }
+                if (!fileName.isEmpty()) {
+                    // create the file as per filename
+                    File file = new File(fileName);
+                    // try to write the actual data into the file:
+                    try (FileOutputStream fos = new FileOutputStream(file)) {
+                        fos.write(data);
+                        fos.flush();
+                    } catch (FileNotFoundException fe) {
+                        fe.printStackTrace();
+                    }
+                }
+                os.close();
+            }
         }catch(IOException e){
             e.printStackTrace();
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args){
         Client client = new Client();
         client.sendRequest();
     }
