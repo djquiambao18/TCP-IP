@@ -45,10 +45,10 @@ public class Client {
             responseHeader = Arrays.copyOf(responseHeader, size);
             String resp = new String(responseHeader);
             if(!resp.contains("404")) {
-            // for reading in the data sent over the network.
-            DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
-            // read in data size:
-            int dataSize = dis.readInt();
+                // for reading in the data sent over the network.
+                DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
+                // read in data size:
+                int dataSize = dis.readInt();
                 if (dataSize > 0) {
                     // read in the data/file:
                     byte[] data = new byte[dataSize];
@@ -75,10 +75,11 @@ public class Client {
                         }
                     }
                 }
+            }
                 System.out.println("(Client) Message received: " + resp);
 
                 os.close();
-            }
+
         }catch(IOException e){
             e.printStackTrace();
         }
