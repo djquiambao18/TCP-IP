@@ -132,7 +132,7 @@ public class Server {
                     strBuilder.append(Arrays.toString(fileBytes)).append("]");
                     responseMsg = strBuilder.toString();
                 }
-
+                System.out.println("Server out: " + responseMsg);
                 OutputStream os = socket.getOutputStream();
                 os.write(responseMsg.getBytes());
                 os.flush();
